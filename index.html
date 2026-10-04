@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Smart Downloader - 4K & Hi-Res</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-zinc-950 to-slate-900 min-h-screen text-white flex flex-col items-center justify-center p-4">
+    <div class="max-w-xl w-full bg-slate-800/90 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-slate-700">
+        <div class="text-center mb-6">
+            <span class="bg-cyan-500/20 text-cyan-400 text-xs font-semibold px-3 py-1 rounded-full border border-cyan-500/30">⚡ AI Anti-Bot & Hi-Res Engine</span>
+            <h1 class="text-3xl font-extrabold mt-3 tracking-tight">Tải Video 4K & Nhạc Hi-Res</h1>
+            <p class="text-slate-400 text-sm mt-1">YouTube, TikTok, Instagram (Dán link hoặc gõ tên)</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Đường dẫn (URL) hoặc Tên nội dung</label>
+                <input type="text" id="queryInput" placeholder="Ví dụ: Link hoặc Tên bài hát/video" 
+                    class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white placeholder-slate-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Chọn Chất Lượng Đầu Ra</label>
+                <select id="qualitySelect" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 text-white font-medium">
+                    <optgroup label="🎬 Video Chất Lượng Cao">
+                        <option value="4k">🔥 Video 4K (Ultra HD - 2160p)</option>
+                        <option value="2k">💎 Video 2K (Quad HD - 1440p)</option>
+                        <option value="1080p" selected>✨ Video Full HD (1080p)</option>
+                        <option value="720p">📱 Video HD (720p)</option>
+                    </optgroup>
+                    <optgroup label="🎵 Nhạc Hi-Res / Lossless">
+                        <option value="flac">🎧 Hi-Res Lossless FLAC (Studio Quality)</option>
+                        <option value="alac">🍏 Apple Lossless ALAC</option>
+                        <option value="mp3_320">🎵 MP3 Chất lượng cao (320kbps)</option>
+                        <option value="mp3_192">🎶 MP3 Tiêu chuẩn (192kbps)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <button onclick="startDownload()" id="downloadBtn" 
+                class="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all duration-200 flex items-center justify-center space-x-2">
+                <span>🚀 Bắt Đầu Tải Định Dạng Cao Nhất</span>
+            </button>
+        </div>
+
+        <div id="statusBox" class="mt-6 hidden">
+            <div id="loadingState" class="flex items-center justify-center space-x-3 text-cyan-400 py-3">
+                <svg class="animate-spin h-6 w-6 text-cyan-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                <span id="statusText" class="text-sm font-medium">AI đang xử lý và tải xuống...</span>
+            </div>
+            <div id="resultState" class="hidden text-center bg-slate-900/80 p-4 rounded-xl border border-slate-700">
+                <p id="resultTitle" class="font-semibold text-emerald-400 mb-3 truncate"></p>
+                <a id="downloadLink" href="#" target="_blank" 
+                    class="inline-block bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 px-6 rounded-lg transition-all shadow-md">
+                    📥 Tải File Xuống Ngay
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function startDownload() {
+            const query = document.getElementById('queryInput').value.trim();
+            const quality = document.getElementById('qualitySelect').value;
+            const statusBox = document.getElementById('statusBox');
+            const loadingState = document.getElementById('loadingState');
+            const resultState = document.getElementById('resultState');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            if (!query) {
+                alert('Vui lòng nhập link hoặc tên nội dung cần tải!');
+                return;
+            }
+
+            statusBox.classList.remove('hidden');
+            loadingState.classList.remove('hidden');
+            resultState.classList.add('hidden');
+            downloadBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, quality })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || 'Lỗi xử lý.');
+
+                loadingState.classList.add('hidden');
+                resultState.classList.remove('hidden');
+                document.getElementById('resultTitle').innerText = "✅ " + data.title;
+                document.getElementById('downloadLink').href = data.download_url;
+            } catch (error) {
+                loadingState.classList.add('hidden');
+                resultState.classList.remove('hidden');
+                document.getElementById('resultTitle').innerText = "❌ " + error.message;
+                document.getElementById('downloadLink').style.display = 'none';
+            } finally {
+                downloadBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
